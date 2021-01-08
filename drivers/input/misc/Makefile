@@ -6,6 +6,7 @@
 # Each configuration option enables a list of files.
 
 obj-$(CONFIG_INPUT_AW8624_HAPTIC_MIUI)	+= aw8624_haptic_miui/
+obj-$(CONFIG_INPUT_AW8624_HAPTIC_OSS)	+= aw8624_haptic_oss/
 obj-$(CONFIG_INPUT_88PM860X_ONKEY)	+= 88pm860x_onkey.o
 obj-$(CONFIG_INPUT_88PM80X_ONKEY)	+= 88pm80x_onkey.o
 obj-$(CONFIG_INPUT_AB8500_PONKEY)	+= ab8500-ponkey.o
