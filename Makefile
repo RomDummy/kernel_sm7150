@@ -758,6 +758,9 @@ endif
 ifdef CONFIG_MINIMAL_TRACING_FOR_IORAP
 KBUILD_CFLAGS   += -DNOTRACE
 endif
+ifdef CONFIG_LTO_CLANG
+KBUILD_CFLAG	+= -fwhole-program-vtables
+endif
 
 # Tell compiler to use pipes instead of temporary files during compilation
 KBUILD_CFLAGS += $(call cc-option, -pipe)
@@ -944,6 +947,7 @@ KBUILD_LDFLAGS_MODULE += -T scripts/module-lto.lds
 # allow disabling only clang LTO where needed
 DISABLE_LTO_CLANG := -fno-lto
 export DISABLE_LTO_CLANG
+LDFLAGS		+= --plugin-opt=-import-instr-limit=5
 endif
 
 ifdef CONFIG_LTO
