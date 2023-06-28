@@ -31,6 +31,7 @@
 #include <linux/syscalls.h>
 #include <linux/power_supply.h>
 #include <linux/pm_qos.h>
+#include <misc/aghisna_haptic.h>
 #include "aw8624_reg.h"
 #include "aw8624.h"
 
@@ -4290,7 +4291,10 @@ static int __init aw8624_i2c_init(void)
 
 	pr_info("aw8624 driver version %s\n", AW8624_VERSION);
 
-	ret = i2c_add_driver(&aw8624_i2c_driver);
+	if (haptic_qti_oss) {
+		ret = i2c_add_driver(&aw8624_i2c_driver);
+	}
+	
 	if (ret) {
 		pr_err("fail to add aw8624 device into i2c\n");
 		return ret;
