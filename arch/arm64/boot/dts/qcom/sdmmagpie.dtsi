@@ -973,6 +973,33 @@
 			   &cdsp_cdsp_l3_lat>;
 
 		#clock-cells = <1>;
+		qcom,cpufreq-table-0 =
+			< 300000>,
+			< 576000>,
+			< 768000>,
+			<1017600>,
+			<1248000>,
+			<1324800>,
+			<1497600>,
+			<1612800>,
+			<1708800>,
+			<1804800>;
+
+		qcom,cpufreq-table-6 =
+			< 300000>,
+			< 652800>,
+			< 806400>,
+			< 979200>,
+			<1094400>,
+			<1209600>,
+			<1324800>,
+			<1555200>,
+			<1708800>,
+			<1843200>,
+			<1939200>,
+			<2169600>,
+			<2208000>,
+			<2304000>;
 	};
 
 	cpucc_debug: syscon@182a0018 {
@@ -2843,7 +2870,7 @@
 		compatible = "devfreq-simple-dev";
 		clock-names = "devfreq_clk";
 		clocks = <&clock_cpucc L3_CLUSTER0_VOTE_CLK>;
-		governor = "performance";
+		governor = "powersave";
 	};
 
 	cpu0_cpu_l3_latmon: qcom,cpu0-cpu-l3-latmon {
@@ -2863,7 +2890,7 @@
 		compatible = "devfreq-simple-dev";
 		clock-names = "devfreq_clk";
 		clocks = <&clock_cpucc L3_CLUSTER1_VOTE_CLK>;
-		governor = "performance";
+		governor = "powersave";
 	};
 
 	cpu6_cpu_l3_latmon: qcom,cpu6-cpu-l3-latmon {
@@ -2881,7 +2908,7 @@
 
 	cpu0_cpu_llcc_lat: qcom,cpu0-cpu-llcc-lat {
 		compatible = "qcom,devbw";
-		governor = "performance";
+		governor = "powersave";
 		qcom,src-dst-ports =
 			<MSM_BUS_MASTER_AMPSS_M0 MSM_BUS_SLAVE_LLCC>;
 		qcom,active-only;
@@ -2901,7 +2928,7 @@
 
 	cpu6_cpu_llcc_lat: qcom,cpu6-cpu-llcc-lat {
 		compatible = "qcom,devbw";
-		governor = "performance";
+		governor = "powersave";
 		qcom,src-dst-ports =
 			<MSM_BUS_MASTER_AMPSS_M0 MSM_BUS_SLAVE_LLCC>;
 		qcom,active-only;
@@ -2923,7 +2950,7 @@
 
 	cpu0_llcc_ddr_lat: qcom,cpu0-llcc-ddr-lat {
 		compatible = "qcom,devbw";
-		governor = "performance";
+		governor = "powersave";
 		qcom,src-dst-ports =
 			<MSM_BUS_MASTER_LLCC MSM_BUS_SLAVE_EBI_CH0>;
 		qcom,active-only;
@@ -2945,7 +2972,7 @@
 
 	cpu6_llcc_ddr_lat: qcom,cpu6-llcc-ddr-lat {
 		compatible = "qcom,devbw";
-		governor = "performance";
+		governor = "powersave";
 		qcom,src-dst-ports =
 			<MSM_BUS_MASTER_LLCC MSM_BUS_SLAVE_EBI_CH0>;
 		qcom,active-only;
@@ -2967,7 +2994,7 @@
 
 	cpu0_cpu_ddr_latfloor: qcom,cpu0-cpu-ddr-latfloor {
 		compatible = "qcom,devbw";
-		governor = "performance";
+		governor = "powersave";
 		qcom,src-dst-ports =
 			<MSM_BUS_MASTER_LLCC MSM_BUS_SLAVE_EBI_CH0>;
 		qcom,active-only;
@@ -2987,7 +3014,7 @@
 
 	cpu6_cpu_ddr_latfloor: qcom,cpu6-cpu-ddr-latfloor {
 		compatible = "qcom,devbw";
-		governor = "performance";
+		governor = "powersave";
 		qcom,src-dst-ports =
 			<MSM_BUS_MASTER_LLCC MSM_BUS_SLAVE_EBI_CH0>;
 		qcom,active-only;

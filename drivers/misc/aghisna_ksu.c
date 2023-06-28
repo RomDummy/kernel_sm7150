@@ -18,52 +18,32 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
-#include <misc/aghisna_panel.h>
+#include <misc/aghisna_ksu.h>
 
-/* dfps */
-bool __read_mostly dfps_mod = false;
-module_param(dfps_mod, bool, 0644);
+bool __read_mostly ksu_sue = false;
+module_param(ksu_sue, bool, 0644);
 
-static int __init read_dfps(char *s)
+static int __init read_ksu(char *s)
 {
     int status;
 	if (s)
 		status = simple_strtoul(s, NULL, 0);
 
 	if ( status > 0 ) {
-		dfps_mod = true;
+		ksu_sue = true;
 	} else {
-		dfps_mod = false;
+		ksu_sue = false;
 	}
 	return 1;
 }
-__setup("aghisna.fps=", read_dfps);
-
-/* dimension */
-bool __read_mostly jenis_dimensi = false;
-module_param(jenis_dimensi, bool, 0644);
-
-static int __init read_old_mdsi(char *s)
-{
-    int status;
-	if (s)
-		status = simple_strtoul(s, NULL, 0);
-
-	if ( status > 0 ) {
-		jenis_dimensi = true;
-	} else {
-		jenis_dimensi = false;
-	}
-	return 1;
-}
-__setup("aghisna.dimen=", read_old_mdsi);
+__setup("aghisna.ksu=", read_ksu);
 
 static int __init prepare_driver_init(void) {
- printk(KERN_INFO "aghisna display initialized");
+ printk(KERN_INFO "aghisna ksu initialized");
  return 0;
 }
 static void __exit prepare_driver_exit(void) {
- printk(KERN_INFO "aghisna display exit");
+ printk(KERN_INFO "aghisna ksu exit");
 }
 
 module_init(prepare_driver_init);

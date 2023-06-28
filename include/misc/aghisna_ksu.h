@@ -11,9 +11,8 @@
  * Copyright (C) 2022 ZyCromerZ
  * Copyright (C) 2023 RooGhz
  *
- * Inspired from lyb display
+ * Inspired from lyb taskmmu
  *
  */
 
-extern bool jenis_dimensi;
-extern bool dfps_mod;
+extern bool ksu_sue;
