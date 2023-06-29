@@ -31,8 +31,9 @@
 #include <linux/syscalls.h>
 #include <linux/power_supply.h>
 #include <linux/pm_qos.h>
-#include "aw8624_reg.h"
-#include "aw8624.h"
+#include <misc/aghisna_haptic.h>
+#include "aw8624_reg_miui.h"
+#include "aw8624_miui.h"
 
 /******************************************************
  *
@@ -58,22 +59,22 @@
 #define OSC_CALIBRATION_T_LENGTH 5100000
 #define PM_QOS_VALUE_VB 400
 
-struct pm_qos_request pm_qos_req_vb;
+struct pm_qos_request pm_qos_req_vb_mi;
 /******************************************************
  *
  * variable
  *
  ******************************************************/
-#define AW8624_RTP_NAME_MAX        64
+#define aw8624_rtp_mi_NAME_MAX        64
 static char *aw8624_ram_name = "aw8624_haptic.bin";
 
-static char aw8624_rtp_name[][AW8624_RTP_NAME_MAX] = {
+static char aw8624_rtp_mi_name[][aw8624_rtp_mi_NAME_MAX] = {
 	{"osc_rtp_24K_5s.bin"},
-	{"aw8624_rtp.bin"},
+	{"aw8624_rtp_mi.bin"},
 };
 
-struct aw8624_container *aw8624_rtp;
-struct aw8624 *g_aw8624;
+struct aw8624_container *aw8624_rtp_mi;
+struct aw8624 *g_aw8624_mi;
 
 /******************************************************
  *
@@ -178,37 +179,37 @@ static int aw8624_i2c_writes(struct aw8624 *aw8624,
  * ram update
  *
  *****************************************************/
-static void aw8624_rtp_loaded(const struct firmware *cont, void *context)
+static void aw8624_rtp_mi_loaded(const struct firmware *cont, void *context)
 {
 	struct aw8624 *aw8624 = context;
 
 	if (!cont) {
 		pr_err("%s: failed to read %s\n", __func__,
-		       aw8624_rtp_name[aw8624->rtp_file_num]);
+		       aw8624_rtp_mi_name[aw8624->rtp_file_num]);
 		release_firmware(cont);
 		return;
 	}
 
 	/* aw8624 rtp update */
-	aw8624_rtp = vmalloc(cont->size + sizeof(int));
-	if (!aw8624_rtp) {
+	aw8624_rtp_mi = vmalloc(cont->size + sizeof(int));
+	if (!aw8624_rtp_mi) {
 		release_firmware(cont);
 		pr_err("%s: Error allocating memory\n", __func__);
 		return;
 	}
-	aw8624_rtp->len = cont->size;
-	memcpy(aw8624_rtp->data, cont->data, cont->size);
+	aw8624_rtp_mi->len = cont->size;
+	memcpy(aw8624_rtp_mi->data, cont->data, cont->size);
 	release_firmware(cont);
 
 	aw8624->rtp_init = 1;
 }
 
-static int aw8624_rtp_update(struct aw8624 *aw8624)
+static int aw8624_rtp_mi_update(struct aw8624 *aw8624)
 {
 	return request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
-				       aw8624_rtp_name[aw8624->rtp_file_num],
+				       aw8624_rtp_mi_name[aw8624->rtp_file_num],
 				       aw8624->dev, GFP_KERNEL, aw8624,
-				       aw8624_rtp_loaded);
+				       aw8624_rtp_mi_loaded);
 }
 
 static void aw8624_container_update(struct aw8624 *aw8624,
@@ -318,7 +319,7 @@ static void aw8624_ram_loaded(const struct firmware *cont, void *context)
 
 	aw8624->ram_init = 1;
 
-	aw8624_rtp_update(aw8624);
+	aw8624_rtp_mi_update(aw8624);
 }
 
 static int aw8624_ram_update(struct aw8624 *aw8624)
@@ -861,7 +862,7 @@ static int aw8624_haptic_rtp_init(struct aw8624 *aw8624)
 	unsigned int buf_len = 0;
 	bool rtp_start = true;
 
-	pm_qos_add_request(&pm_qos_req_vb, PM_QOS_CPU_DMA_LATENCY,
+	pm_qos_add_request(&pm_qos_req_vb_mi, PM_QOS_CPU_DMA_LATENCY,
 			   PM_QOS_VALUE_VB);
 	aw8624->rtp_cnt = 0;
 	disable_irq(gpio_to_irq(aw8624->irq_gpio));
@@ -869,27 +870,27 @@ static int aw8624_haptic_rtp_init(struct aw8624 *aw8624)
 	       (aw8624->play_mode == AW8624_HAPTIC_RTP_MODE) &&
 	       !atomic_read(&aw8624->exit_in_rtp_loop)) {
 		if (rtp_start) {
-			if ((aw8624_rtp->len - aw8624->rtp_cnt) <
+			if ((aw8624_rtp_mi->len - aw8624->rtp_cnt) <
 			    aw8624->ram.base_addr)
-				buf_len = aw8624_rtp->len - aw8624->rtp_cnt;
+				buf_len = aw8624_rtp_mi->len - aw8624->rtp_cnt;
 			else
 				buf_len = (aw8624->ram.base_addr);
 			aw8624_i2c_writes(aw8624, AW8624_REG_RTP_DATA,
-					  &aw8624_rtp->data[aw8624->rtp_cnt],
+					  &aw8624_rtp_mi->data[aw8624->rtp_cnt],
 					  buf_len);
 			rtp_start = false;
 		} else {
-			if ((aw8624_rtp->len - aw8624->rtp_cnt) <
+			if ((aw8624_rtp_mi->len - aw8624->rtp_cnt) <
 			    (aw8624->ram.base_addr >> 2))
-				buf_len = aw8624_rtp->len - aw8624->rtp_cnt;
+				buf_len = aw8624_rtp_mi->len - aw8624->rtp_cnt;
 			else
 				buf_len = aw8624->ram.base_addr >> 2;
 			aw8624_i2c_writes(aw8624, AW8624_REG_RTP_DATA,
-					  &aw8624_rtp->data[aw8624->rtp_cnt],
+					  &aw8624_rtp_mi->data[aw8624->rtp_cnt],
 					  buf_len);
 		}
 		aw8624->rtp_cnt += buf_len;
-		if (aw8624->rtp_cnt == aw8624_rtp->len) {
+		if (aw8624->rtp_cnt == aw8624_rtp_mi->len) {
 			aw8624->rtp_cnt = 0;
 			break;
 		}
@@ -900,7 +901,7 @@ static int aw8624_haptic_rtp_init(struct aw8624 *aw8624)
 		aw8624_haptic_set_rtp_aei(aw8624, true);
 	}
 
-	pm_qos_remove_request(&pm_qos_req_vb);
+	pm_qos_remove_request(&pm_qos_req_vb_mi);
 	return 0;
 }
 
@@ -1010,7 +1011,7 @@ static int aw8624_clock_OSC_trim_calibration(unsigned long int theory_time,
 	return LRA_TRIM_CODE;
 }
 
-static int aw8624_rtp_trim_lra_calibration(struct aw8624 *aw8624)
+static int aw8624_rtp_mi_trim_lra_calibration(struct aw8624 *aw8624)
 {
 	unsigned char reg_val = 0;
 	unsigned int fre_val = 0;
@@ -1048,7 +1049,7 @@ static unsigned char aw8624_haptic_osc_read_int(struct aw8624 *aw8624)
 	return reg_val;
 }
 
-static int aw8624_rtp_osc_calibration(struct aw8624 *aw8624)
+static int aw8624_rtp_mi_osc_calibration(struct aw8624 *aw8624)
 {
 	const struct firmware *rtp_file;
 	int ret = -1;
@@ -1060,29 +1061,29 @@ static int aw8624_rtp_osc_calibration(struct aw8624 *aw8624)
 
 	/* fw loaded */
 	ret = request_firmware(&rtp_file,
-			       aw8624_rtp_name[0],
+			       aw8624_rtp_mi_name[0],
 			       aw8624->dev);
 	if (ret < 0) {
 		pr_err("%s: failed to read %s\n", __func__,
-		       aw8624_rtp_name[0]);
+		       aw8624_rtp_mi_name[0]);
 		return ret;
 	}
 	/*awinic add stop,for irq interrupt during calibrate */
 	aw8624_haptic_stop(aw8624);
 	aw8624->rtp_init = 0;
 	mutex_lock(&aw8624->rtp_lock);
-	vfree(aw8624_rtp);
-	aw8624_rtp = vmalloc(rtp_file->size + sizeof(int));
-	if (!aw8624_rtp) {
+	vfree(aw8624_rtp_mi);
+	aw8624_rtp_mi = vmalloc(rtp_file->size + sizeof(int));
+	if (!aw8624_rtp_mi) {
 		release_firmware(rtp_file);
 		mutex_unlock(&aw8624->rtp_lock);
 		pr_err("%s: error allocating memory\n", __func__);
 		return -ENOMEM;
 	}
-	aw8624_rtp->len = rtp_file->size;
+	aw8624_rtp_mi->len = rtp_file->size;
 	aw8624->rtp_len = rtp_file->size;
 
-	memcpy(aw8624_rtp->data, rtp_file->data, rtp_file->size);
+	memcpy(aw8624_rtp_mi->data, rtp_file->data, rtp_file->size);
 	release_firmware(rtp_file);
 	mutex_unlock(&aw8624->rtp_lock);
 
@@ -1098,23 +1099,23 @@ static int aw8624_rtp_osc_calibration(struct aw8624 *aw8624)
 	disable_irq(gpio_to_irq(aw8624->irq_gpio));
 	/* haptic start */
 	aw8624_haptic_start(aw8624);
-	pm_qos_add_request(&pm_qos_req_vb, PM_QOS_CPU_DMA_LATENCY,
+	pm_qos_add_request(&pm_qos_req_vb_mi, PM_QOS_CPU_DMA_LATENCY,
 			   PM_QOS_VALUE_VB);
 	while (1) {
 		if (!aw8624_haptic_rtp_get_fifo_afi(aw8624)) {
 			mutex_lock(&aw8624->rtp_lock);
-			if ((aw8624_rtp->len - aw8624->rtp_cnt) <
+			if ((aw8624_rtp_mi->len - aw8624->rtp_cnt) <
 			    (aw8624->ram.base_addr >> 2))
-				buf_len = aw8624_rtp->len - aw8624->rtp_cnt;
+				buf_len = aw8624_rtp_mi->len - aw8624->rtp_cnt;
 			else
 				buf_len = (aw8624->ram.base_addr >> 2);
-			if (aw8624->rtp_cnt != aw8624_rtp->len) {
+			if (aw8624->rtp_cnt != aw8624_rtp_mi->len) {
 				if (aw8624->timeval_flags == 1) {
 					do_gettimeofday(&aw8624->start);
 					aw8624->timeval_flags = 0;
 				}
 				aw8624_i2c_writes(aw8624, AW8624_REG_RTP_DATA,
-						  &aw8624_rtp->data[aw8624->
+						  &aw8624_rtp_mi->data[aw8624->
 								    rtp_cnt],
 						  buf_len);
 				aw8624->rtp_cnt += buf_len;
@@ -1135,7 +1136,7 @@ static int aw8624_rtp_osc_calibration(struct aw8624 *aw8624)
 			break;
 		}
 	}
-	pm_qos_remove_request(&pm_qos_req_vb);
+	pm_qos_remove_request(&pm_qos_req_vb_mi);
 	enable_irq(gpio_to_irq(aw8624->irq_gpio));
 
 	aw8624->osc_cali_flag = 0;
@@ -1146,7 +1147,7 @@ static int aw8624_rtp_osc_calibration(struct aw8624 *aw8624)
 	return 0;
 }
 
-static void aw8624_rtp_work_routine(struct work_struct *work)
+static void aw8624_rtp_mi_work_routine(struct work_struct *work)
 {
 	const struct firmware *rtp_file;
 	int ret = -1;
@@ -1186,17 +1187,17 @@ static void aw8624_rtp_work_routine(struct work_struct *work)
 		if (aw8624->rtp_file_num < 0)
 			aw8624->rtp_file_num = 0;
 		if (aw8624->rtp_file_num >
-		    ((sizeof(aw8624_rtp_name) / AW8624_RTP_NAME_MAX) - 1))
+		    ((sizeof(aw8624_rtp_mi_name) / aw8624_rtp_mi_NAME_MAX) - 1))
 			aw8624->rtp_file_num =
-			    (sizeof(aw8624_rtp_name) / AW8624_RTP_NAME_MAX) - 1;
+			    (sizeof(aw8624_rtp_mi_name) / aw8624_rtp_mi_NAME_MAX) - 1;
 
 		/* fw loaded */
 		ret = request_firmware(&rtp_file,
-				       aw8624_rtp_name[aw8624->rtp_file_num],
+				       aw8624_rtp_mi_name[aw8624->rtp_file_num],
 				       aw8624->dev);
 		if (ret < 0) {
 			pr_err("%s: failed to read %s\n", __func__,
-			       aw8624_rtp_name[aw8624->rtp_file_num]);
+			       aw8624_rtp_mi_name[aw8624->rtp_file_num]);
 			if (aw8624->wk_lock_flag == 1) {
 				pm_relax(aw8624->dev);
 				aw8624->wk_lock_flag = 0;
@@ -1205,9 +1206,9 @@ static void aw8624_rtp_work_routine(struct work_struct *work)
 			return;
 		}
 		aw8624->rtp_init = 0;
-		vfree(aw8624_rtp);
-		aw8624_rtp = vmalloc(rtp_file->size + sizeof(int));
-		if (!aw8624_rtp) {
+		vfree(aw8624_rtp_mi);
+		aw8624_rtp_mi = vmalloc(rtp_file->size + sizeof(int));
+		if (!aw8624_rtp_mi) {
 			release_firmware(rtp_file);
 			pr_err("%s: error allocating memory\n", __func__);
 			if (aw8624->wk_lock_flag == 1) {
@@ -1217,8 +1218,8 @@ static void aw8624_rtp_work_routine(struct work_struct *work)
 			mutex_unlock(&aw8624->lock);
 			return;
 		}
-		aw8624_rtp->len = rtp_file->size;
-		memcpy(aw8624_rtp->data, rtp_file->data, rtp_file->size);
+		aw8624_rtp_mi->len = rtp_file->size;
+		memcpy(aw8624_rtp_mi->data, rtp_file->data, rtp_file->size);
 		release_firmware(rtp_file);
 
 		aw8624->rtp_init = 1;
@@ -1616,7 +1617,7 @@ static int aw8624_file_open(struct inode *inode, struct file *file)
 {
 	if (!try_module_get(THIS_MODULE))
 		return -ENODEV;
-	file->private_data = (void *)g_aw8624;
+	file->private_data = (void *)g_aw8624_mi;
 
 	return 0;
 }
@@ -1966,7 +1967,7 @@ static int aw8624_vibrator_init(struct aw8624 *aw8624)
 	hrtimer_init(&aw8624->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	aw8624->timer.function = aw8624_vibrator_timer_func;
 	INIT_WORK(&aw8624->vibrator_work, aw8624_vibrator_work_routine);
-	INIT_WORK(&aw8624->rtp_work, aw8624_rtp_work_routine);
+	INIT_WORK(&aw8624->rtp_work, aw8624_rtp_mi_work_routine);
 
 	mutex_init(&aw8624->lock);
 	atomic_set(&aw8624->is_in_rtp_loop, 0);
@@ -2034,23 +2035,23 @@ static irqreturn_t aw8624_irq(int irq, void *data)
 			       (aw8624->play_mode == AW8624_HAPTIC_RTP_MODE)
 			       && !atomic_read(&aw8624->exit_in_rtp_loop)) {
 				mutex_lock(&aw8624->rtp_lock);
-				if (!aw8624_rtp) {
+				if (!aw8624_rtp_mi) {
 					mutex_unlock(&aw8624->rtp_lock);
 					break;
 				}
-				if ((aw8624_rtp->len - aw8624->rtp_cnt) <
+				if ((aw8624_rtp_mi->len - aw8624->rtp_cnt) <
 				    (aw8624->ram.base_addr >> 2)) {
 					buf_len =
-					    aw8624_rtp->len - aw8624->rtp_cnt;
+					    aw8624_rtp_mi->len - aw8624->rtp_cnt;
 				} else {
 					buf_len = (aw8624->ram.base_addr >> 2);
 				}
 				aw8624_i2c_writes(aw8624, AW8624_REG_RTP_DATA,
-						  &aw8624_rtp->data[aw8624->
+						  &aw8624_rtp_mi->data[aw8624->
 								    rtp_cnt],
 						  buf_len);
 				aw8624->rtp_cnt += buf_len;
-				if (aw8624->rtp_cnt == aw8624_rtp->len) {
+				if (aw8624->rtp_cnt == aw8624_rtp_mi->len) {
 					aw8624_haptic_set_rtp_aei(aw8624,
 								  false);
 					aw8624->rtp_cnt = 0;
@@ -2657,7 +2658,7 @@ static int select_pin_ctl(struct aw8624 *aw8624, const char *name)
 	int rc;
 
 	for (i = 0; i < ARRAY_SIZE(aw8624->pinctrl_state); i++) {
-		const char *n = pctl_names[i];
+		const char *n = pctl_names_mi[i];
 
 		if (!strncmp(n, name, strlen(n))) {
 			rc = pinctrl_select_state(aw8624->aw8624_pinctrl,
@@ -2770,7 +2771,7 @@ static ssize_t aw8624_i2c_reg_show(struct device *dev,
 	unsigned char i = 0;
 	unsigned char reg_val = 0;
 	for (i = 0; i < AW8624_REG_MAX; i++) {
-		if (!(aw8624_reg_access[i] & REG_RD_ACCESS))
+		if (!(aw8624_reg_access_mi[i] & REG_RD_ACCESS))
 			continue;
 		aw8624_i2c_read(aw8624, i, &reg_val);
 		len +=
@@ -3060,7 +3061,7 @@ static ssize_t aw8624_loop_store(struct device *dev,
 	return count;
 }
 
-static ssize_t aw8624_rtp_show(struct device *dev,
+static ssize_t aw8624_rtp_mi_show(struct device *dev,
 			       struct device_attribute *attr, char *buf)
 {
 	struct aw8624 *aw8624 = dev_get_drvdata(dev);
@@ -3072,7 +3073,7 @@ static ssize_t aw8624_rtp_show(struct device *dev,
 	return len;
 }
 
-static ssize_t aw8624_rtp_store(struct device *dev,
+static ssize_t aw8624_rtp_mi_store(struct device *dev,
 				struct device_attribute *attr, const char *buf,
 				size_t count)
 {
@@ -3087,7 +3088,7 @@ static ssize_t aw8624_rtp_store(struct device *dev,
 	aw8624_haptic_stop(aw8624);
 	aw8624_haptic_set_rtp_aei(aw8624, false);
 	aw8624_interrupt_clear(aw8624);
-	if (val < (sizeof(aw8624_rtp_name) / AW8624_RTP_NAME_MAX)) {
+	if (val < (sizeof(aw8624_rtp_mi_name) / aw8624_rtp_mi_NAME_MAX)) {
 		aw8624->rtp_file_num = val;
 		if (val) {
 			//schedule_work(&aw8624->rtp_work);
@@ -3534,11 +3535,11 @@ static ssize_t aw8624_osc_cali_store(struct device *dev,
 	/*osc calibration flag start,Other behaviors are forbidden */
 	aw8624->osc_cali_run = 1;
 	if (val == 3) {
-		aw8624_rtp_osc_calibration(aw8624);
-		aw8624_rtp_trim_lra_calibration(aw8624);
+		aw8624_rtp_mi_osc_calibration(aw8624);
+		aw8624_rtp_mi_trim_lra_calibration(aw8624);
 	}
 	if (val == 1)
-		aw8624_rtp_osc_calibration(aw8624);
+		aw8624_rtp_mi_osc_calibration(aw8624);
 
 	aw8624->osc_cali_run = 0;
 	/*osc calibration flag end,Other behaviors are permitted */
@@ -3637,7 +3638,7 @@ static DEVICE_ATTR(gain, S_IWUSR | S_IRUGO, aw8624_gain_show,
 static DEVICE_ATTR(seq, S_IWUSR | S_IRUGO, aw8624_seq_show, aw8624_seq_store);
 static DEVICE_ATTR(loop, S_IWUSR | S_IRUGO, aw8624_loop_show,
 		   aw8624_loop_store);
-static DEVICE_ATTR(rtp, S_IWUSR | S_IRUGO, aw8624_rtp_show, aw8624_rtp_store);
+static DEVICE_ATTR(rtp, S_IWUSR | S_IRUGO, aw8624_rtp_mi_show, aw8624_rtp_mi_store);
 static DEVICE_ATTR(ram_update, S_IWUSR | S_IRUGO, aw8624_ram_update_show,
 		   aw8624_ram_update_store);
 static DEVICE_ATTR(f0, S_IWUSR | S_IRUGO, aw8624_f0_show, aw8624_f0_store);
@@ -3771,7 +3772,7 @@ aw8624_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
 		return rc;
 	}
 	for (i = 0; i < ARRAY_SIZE(aw8624->pinctrl_state); i++) {
-		const char *n = pctl_names[i];
+		const char *n = pctl_names_mi[i];
 		struct pinctrl_state *state =
 		    pinctrl_lookup_state(aw8624->aw8624_pinctrl, n);
 		if (IS_ERR(state)) {
@@ -3897,7 +3898,7 @@ aw8624_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
 		goto err_sysfs;
 	}
 
-	g_aw8624 = aw8624;
+	g_aw8624_mi = aw8624;
 
 	return 0;
 
@@ -3970,7 +3971,10 @@ static int __init aw8624_i2c_init(void)
 {
 	int ret = 0;
 
-	ret = i2c_add_driver(&aw8624_i2c_driver);
+	if (haptic_qti_miui) {
+		ret = i2c_add_driver(&aw8624_i2c_driver);
+	}
+	
 	if (ret) {
 		pr_err("%s: fail to add aw8624 device into i2c\n");
 		return ret;

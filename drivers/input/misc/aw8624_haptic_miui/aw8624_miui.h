@@ -297,7 +297,7 @@ struct qti_hap_config {
 #endif
 
 #ifdef ENABLE_PIN_CONTROL
-const char * const pctl_names[] = {
+const char * const pctl_names_mi[] = {
 	"aw8624_reset_reset",
 	"aw8624_reset_active",
 	"aw8624_interrupt_active",
@@ -308,7 +308,7 @@ struct aw8624 {
 	struct mutex lock;
 #ifdef ENABLE_PIN_CONTROL
 	struct pinctrl *aw8624_pinctrl;
-	struct pinctrl_state *pinctrl_state[ARRAY_SIZE(pctl_names)];
+	struct pinctrl_state *pinctrl_state[ARRAY_SIZE(pctl_names_mi)];
 #endif
 	int enable_pin_control;
 	struct work_struct vibrator_work;

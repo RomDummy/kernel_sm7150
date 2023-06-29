@@ -132,7 +132,7 @@
 #define AW8624_REG_MAX 0xff
 
 
-const unsigned char aw8624_reg_access[AW8624_REG_MAX] = {
+const unsigned char aw8624_reg_access_mi[AW8624_REG_MAX] = {
 	[AW8624_REG_ID] = REG_RD_ACCESS,
 	[AW8624_REG_SYSST] = REG_RD_ACCESS,
 	[AW8624_REG_SYSINT] = REG_RD_ACCESS,

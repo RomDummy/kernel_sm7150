@@ -1,0 +1,1 @@
+obj-$(CONFIG_INPUT_AW8624_HAPTIC_OSS) 	+= aw8624_oss.o

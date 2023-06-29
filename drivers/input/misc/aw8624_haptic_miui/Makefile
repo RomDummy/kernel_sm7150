@@ -1,0 +1,2 @@
+obj-$(CONFIG_INPUT_AW8624_HAPTIC_MIUI) 	+= aw8624_miui.o
+

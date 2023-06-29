@@ -107,3 +107,4 @@ obj-$(CONFIG_FORCE_FAST_CHARGE) += fastchg.o
 obj-y += aghisna_panel.o
 obj-y += aghisna_gpu.o
 obj-y += aghisna_ksu.o
+obj-y += aghisna_haptic.o
