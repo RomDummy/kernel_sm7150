@@ -1810,7 +1810,7 @@ static int dsi_panel_parse_dfps_caps(struct dsi_panel *panel)
 		goto error;
 	}
 
-/* aghisna addon */
+	/* aghisna addon */
 	if (dfps_mod){
 	rc = utils->read_u32_array(utils->data,
 			"qcom,dsi-supported-dfps-list-mod",
@@ -2817,7 +2817,13 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 	panel->bl_config.bl_scale = MAX_BL_SCALE_LEVEL;
 	panel->bl_config.bl_scale_ad = MAX_AD_BL_SCALE_LEVEL;
 
+	/* aghisna addon */
+	if (dfps_mod) {
+	rc = utils->read_u32(utils->data, "qcom,mdss-dsi-bl-min-level-mod", &val);
+	} else {
 	rc = utils->read_u32(utils->data, "qcom,mdss-dsi-bl-min-level", &val);
+	}
+	
 	if (rc) {
 		pr_debug("[%s] bl-min-level unspecified, defaulting to zero\n",
 			 panel->name);
