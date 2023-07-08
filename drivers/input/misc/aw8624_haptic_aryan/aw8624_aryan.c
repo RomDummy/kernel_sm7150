@@ -31,6 +31,7 @@
 #include <linux/syscalls.h>
 #include <linux/power_supply.h>
 #include <linux/pm_qos.h>
+#include <misc/aghisna_haptic.h>
 #include "aw8624_reg_aryan.h"
 #include "aw8624_aryan.h"
 
@@ -58,16 +59,16 @@
 #define OSC_CALIBRATION_T_LENGTH 5100000
 #define PM_QOS_VALUE_VB 400
 
-struct pm_qos_request pm_qos_req_vb;
+struct pm_qos_request pm_qos_req_vb_ary;
 /******************************************************
  *
  * variable
  *
  ******************************************************/
-#define AW8624_RTP_NAME_MAX        64
+#define aw8624_rtp_ary_NAME_MAX        64
 static char *aw8624_ram_name = "aw8624_haptic.bin";
 
-static char aw8624_rtp_name[][AW8624_RTP_NAME_MAX] = {
+static char aw8624_rtp_ary_name[][aw8624_rtp_ary_NAME_MAX] = {
 	{"osc_rtp_24K_5s.bin"},
 	{"AcousticGuitar_RTP.bin"},	//21
 	{"Blues_RTP.bin"},
@@ -147,13 +148,13 @@ static char aw8624_rtp_name[][AW8624_RTP_NAME_MAX] = {
 	{"NFC_card_rtp.bin"},
 	{"wakeup_voice_assistant_rtp.bin"},
 	{"NFC_card_slow_rtp.bin"},
-	{"aw8624_rtp.bin"},	//99
-	{"aw8624_rtp.bin"},	//100
+	{"aw8624_rtp_ary.bin"},	//99
+	{"aw8624_rtp_ary.bin"},	//100
 	{"offline_countdown_RTP.bin"},
 	{"scene_bomb_injury_RTP.bin"},
 	{"scene_bomb_RTP.bin"},	//103
 	{"door_open_RTP.bin"},
-	{"aw8624_rtp.bin"},
+	{"aw8624_rtp_ary.bin"},
 	{"scene_step_RTP.bin"},	//106
 	{"crawl_RTP.bin"},
 	{"scope_on_RTP.bin"},
@@ -165,7 +166,7 @@ static char aw8624_rtp_name[][AW8624_RTP_NAME_MAX] = {
 	{"punch_RTP.bin"},
 	{"pan_RTP.bin"},
 	{"bandage_RTP.bin"},
-	{"aw8624_rtp.bin"},
+	{"aw8624_rtp_ary.bin"},
 	{"scene_jump_RTP.bin"},
 	{"vehicle_plane_RTP.bin"},	//119
 	{"scene_openparachute_RTP.bin"},	//120
@@ -176,7 +177,7 @@ static char aw8624_rtp_name[][AW8624_RTP_NAME_MAX] = {
 	{"vehicle_moto_RTP.bin"},	//125
 	{"firearms_akm_RTP.bin"},	//126
 	{"firearms_m16a4_RTP.bin"},	//127
-	{"aw8624_rtp.bin"},
+	{"aw8624_rtp_ary.bin"},
 	{"firearms_awm_RTP.bin"},	//129
 	{"firearms_mini14_RTP.bin"},	//130
 	{"firearms_vss_RTP.bin"},	//131
@@ -184,17 +185,17 @@ static char aw8624_rtp_name[][AW8624_RTP_NAME_MAX] = {
 	{"firearms_ump9_RTP.bin"},	//133
 	{"firearms_dp28_RTP.bin"},	//134
 	{"firearms_s1897_RTP.bin"},	//135
-	{"aw8624_rtp.bin"},
+	{"aw8624_rtp_ary.bin"},
 	{"firearms_p18c_RTP.bin"},	//137
-	{"aw8624_rtp.bin"},
-	{"aw8624_rtp.bin"},
-	{"aw8624_rtp.bin"},
-	{"aw8624_rtp.bin"},	//141
-	{"aw8624_rtp.bin"},
+	{"aw8624_rtp_ary.bin"},
+	{"aw8624_rtp_ary.bin"},
+	{"aw8624_rtp_ary.bin"},
+	{"aw8624_rtp_ary.bin"},	//141
+	{"aw8624_rtp_ary.bin"},
 };
 
-struct aw8624_container *aw8624_rtp;
-struct aw8624 *g_aw8624;
+struct aw8624_container *aw8624_rtp_ary;
+struct aw8624 *g_aw8624_ary;
 
 /******************************************************
  *
@@ -299,45 +300,45 @@ static int aw8624_i2c_writes(struct aw8624 *aw8624,
  * ram update
  *
  *****************************************************/
-static void aw8624_rtp_loaded(const struct firmware *cont, void *context)
+static void aw8624_rtp_ary_loaded(const struct firmware *cont, void *context)
 {
 	struct aw8624 *aw8624 = context;
 	pr_info("%s: enter\n", __func__);
 
 	if (!cont) {
 		pr_err("%s: failed to read %s\n", __func__,
-		       aw8624_rtp_name[aw8624->rtp_file_num]);
+		       aw8624_rtp_ary_name[aw8624->rtp_file_num]);
 		release_firmware(cont);
 		return;
 	}
 
 	pr_info("%s: loaded %s - size: %zu\n", __func__,
-		aw8624_rtp_name[aw8624->rtp_file_num], cont ? cont->size : 0);
+		aw8624_rtp_ary_name[aw8624->rtp_file_num], cont ? cont->size : 0);
 
 	/* aw8624 rtp update */
-	aw8624_rtp = vmalloc(cont->size + sizeof(int));
-	if (!aw8624_rtp) {
+	aw8624_rtp_ary = vmalloc(cont->size + sizeof(int));
+	if (!aw8624_rtp_ary) {
 		release_firmware(cont);
 		pr_err("%s: Error allocating memory\n", __func__);
 		return;
 	}
-	aw8624_rtp->len = cont->size;
-	pr_info("%s: rtp size = %d\n", __func__, aw8624_rtp->len);
-	memcpy(aw8624_rtp->data, cont->data, cont->size);
+	aw8624_rtp_ary->len = cont->size;
+	pr_info("%s: rtp size = %d\n", __func__, aw8624_rtp_ary->len);
+	memcpy(aw8624_rtp_ary->data, cont->data, cont->size);
 	release_firmware(cont);
 
 	aw8624->rtp_init = 1;
 	pr_info("%s: rtp update complete\n", __func__);
 }
 
-static int aw8624_rtp_update(struct aw8624 *aw8624)
+static int aw8624_rtp_ary_update(struct aw8624 *aw8624)
 {
 	pr_info("%s: enter\n", __func__);
 
 	return request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
-				       aw8624_rtp_name[aw8624->rtp_file_num],
+				       aw8624_rtp_ary_name[aw8624->rtp_file_num],
 				       aw8624->dev, GFP_KERNEL, aw8624,
-				       aw8624_rtp_loaded);
+				       aw8624_rtp_ary_loaded);
 }
 
 static void aw8624_container_update(struct aw8624 *aw8624,
@@ -465,7 +466,7 @@ static void aw8624_ram_loaded(const struct firmware *cont, void *context)
 
 	//aw8624_haptic_trig_enable_config(aw8624);
 
-	aw8624_rtp_update(aw8624);
+	aw8624_rtp_ary_update(aw8624);
 }
 
 static int aw8624_ram_update(struct aw8624 *aw8624)
@@ -1073,16 +1074,16 @@ static int aw8624_haptic_rtp_init(struct aw8624 *aw8624)
 	while ((!aw8624_haptic_rtp_get_fifo_afi(aw8624)) &&
 	       (aw8624->play_mode == AW8624_HAPTIC_RTP_MODE)) {
 		pr_info("%s: rtp cnt = %d\n", __func__, aw8624->rtp_cnt);
-		if ((aw8624_rtp->len - aw8624->rtp_cnt) <
+		if ((aw8624_rtp_ary->len - aw8624->rtp_cnt) <
 		    (aw8624->ram.base_addr >> 3)) {
-			buf_len = aw8624_rtp->len - aw8624->rtp_cnt;
+			buf_len = aw8624_rtp_ary->len - aw8624->rtp_cnt;
 		} else {
 			buf_len = (aw8624->ram.base_addr >> 3);
 		}
 		aw8624_i2c_writes(aw8624, AW8624_REG_RTP_DATA,
-				  &aw8624_rtp->data[aw8624->rtp_cnt], buf_len);
+				  &aw8624_rtp_ary->data[aw8624->rtp_cnt], buf_len);
 		aw8624->rtp_cnt += buf_len;
-		if (aw8624->rtp_cnt == aw8624_rtp->len) {
+		if (aw8624->rtp_cnt == aw8624_rtp_ary->len) {
 			pr_info("%s: rtp update complete\n", __func__);
 			aw8624->rtp_cnt = 0;
 			return 0;
@@ -1100,7 +1101,7 @@ static int aw8624_haptic_rtp_init(struct aw8624 *aw8624)
 	bool rtp_start = true;
 
 	pr_debug("%s: enter\n", __func__);
-	pm_qos_add_request(&pm_qos_req_vb, PM_QOS_CPU_DMA_LATENCY,
+	pm_qos_add_request(&pm_qos_req_vb_ary, PM_QOS_CPU_DMA_LATENCY,
 			   PM_QOS_VALUE_VB);
 	aw8624->rtp_cnt = 0;
 	disable_irq(gpio_to_irq(aw8624->irq_gpio));
@@ -1108,29 +1109,29 @@ static int aw8624_haptic_rtp_init(struct aw8624 *aw8624)
 	       (aw8624->play_mode == AW8624_HAPTIC_RTP_MODE) &&
 	       !atomic_read(&aw8624->exit_in_rtp_loop)) {
 		if (rtp_start) {
-			if ((aw8624_rtp->len - aw8624->rtp_cnt) <
+			if ((aw8624_rtp_ary->len - aw8624->rtp_cnt) <
 			    aw8624->ram.base_addr)
-				buf_len = aw8624_rtp->len - aw8624->rtp_cnt;
+				buf_len = aw8624_rtp_ary->len - aw8624->rtp_cnt;
 			else
 				buf_len = (aw8624->ram.base_addr);
 			aw8624_i2c_writes(aw8624, AW8624_REG_RTP_DATA,
-					  &aw8624_rtp->data[aw8624->rtp_cnt],
+					  &aw8624_rtp_ary->data[aw8624->rtp_cnt],
 					  buf_len);
 			rtp_start = false;
 		} else {
-			if ((aw8624_rtp->len - aw8624->rtp_cnt) <
+			if ((aw8624_rtp_ary->len - aw8624->rtp_cnt) <
 			    (aw8624->ram.base_addr >> 2))
-				buf_len = aw8624_rtp->len - aw8624->rtp_cnt;
+				buf_len = aw8624_rtp_ary->len - aw8624->rtp_cnt;
 			else
 				buf_len = aw8624->ram.base_addr >> 2;
 			aw8624_i2c_writes(aw8624, AW8624_REG_RTP_DATA,
-					  &aw8624_rtp->data[aw8624->rtp_cnt],
+					  &aw8624_rtp_ary->data[aw8624->rtp_cnt],
 					  buf_len);
 		}
 		aw8624->rtp_cnt += buf_len;
 		pr_debug("%s: update rtp_cnt = %d \n", __func__,
 			 aw8624->rtp_cnt);
-		if (aw8624->rtp_cnt == aw8624_rtp->len) {
+		if (aw8624->rtp_cnt == aw8624_rtp_ary->len) {
 			pr_info("%s: rtp update complete\n", __func__);
 			aw8624->rtp_cnt = 0;
 			break;
@@ -1143,7 +1144,7 @@ static int aw8624_haptic_rtp_init(struct aw8624 *aw8624)
 	}
 
 	pr_debug("%s: exit\n", __func__);
-	pm_qos_remove_request(&pm_qos_req_vb);
+	pm_qos_remove_request(&pm_qos_req_vb_ary);
 	return 0;
 #endif
 }
@@ -1301,7 +1302,7 @@ static int aw8624_clock_OSC_trim_calibration(unsigned long int theory_time,
 	return LRA_TRIM_CODE;
 }
 
-static int aw8624_rtp_trim_lra_calibration(struct aw8624 *aw8624)
+static int aw8624_rtp_ary_trim_lra_calibration(struct aw8624 *aw8624)
 {
 	unsigned char reg_val = 0;
 	unsigned int fre_val = 0;
@@ -1341,7 +1342,7 @@ static unsigned char aw8624_haptic_osc_read_int(struct aw8624 *aw8624)
 	return reg_val;
 }
 
-static int aw8624_rtp_osc_calibration(struct aw8624 *aw8624)
+static int aw8624_rtp_ary_osc_calibration(struct aw8624 *aw8624)
 {
 	const struct firmware *rtp_file;
 	int ret = -1;
@@ -1354,30 +1355,30 @@ static int aw8624_rtp_osc_calibration(struct aw8624 *aw8624)
 	pr_info("%s: enter\n", __func__);
 	/* fw loaded */
 	ret = request_firmware(&rtp_file,
-			       aw8624_rtp_name[0],
+			       aw8624_rtp_ary_name[0],
 			       aw8624->dev);
 	if (ret < 0) {
 		pr_err("%s: failed to read %s\n", __func__,
-		       aw8624_rtp_name[0]);
+		       aw8624_rtp_ary_name[0]);
 		return ret;
 	}
 	/*awinic add stop,for irq interrupt during calibrate */
 	aw8624_haptic_stop(aw8624);
 	aw8624->rtp_init = 0;
 	mutex_lock(&aw8624->rtp_lock);
-	vfree(aw8624_rtp);
-	aw8624_rtp = vmalloc(rtp_file->size + sizeof(int));
-	if (!aw8624_rtp) {
+	vfree(aw8624_rtp_ary);
+	aw8624_rtp_ary = vmalloc(rtp_file->size + sizeof(int));
+	if (!aw8624_rtp_ary) {
 		release_firmware(rtp_file);
 		mutex_unlock(&aw8624->rtp_lock);
 		pr_err("%s: error allocating memory\n", __func__);
 		return -ENOMEM;
 	}
-	aw8624_rtp->len = rtp_file->size;
+	aw8624_rtp_ary->len = rtp_file->size;
 	aw8624->rtp_len = rtp_file->size;
 	pr_info("%s: rtp file [%s] size = %d\n", __func__,
-		aw8624_rtp_name[0], aw8624_rtp->len);
-	memcpy(aw8624_rtp->data, rtp_file->data, rtp_file->size);
+		aw8624_rtp_ary_name[0], aw8624_rtp_ary->len);
+	memcpy(aw8624_rtp_ary->data, rtp_file->data, rtp_file->size);
 	release_firmware(rtp_file);
 	mutex_unlock(&aw8624->rtp_lock);
 
@@ -1393,7 +1394,7 @@ static int aw8624_rtp_osc_calibration(struct aw8624 *aw8624)
 	disable_irq(gpio_to_irq(aw8624->irq_gpio));
 	/* haptic start */
 	aw8624_haptic_start(aw8624);
-	pm_qos_add_request(&pm_qos_req_vb, PM_QOS_CPU_DMA_LATENCY,
+	pm_qos_add_request(&pm_qos_req_vb_ary, PM_QOS_CPU_DMA_LATENCY,
 			   PM_QOS_VALUE_VB);
 	while (1) {
 		if (!aw8624_haptic_rtp_get_fifo_afi(aw8624)) {
@@ -1401,18 +1402,18 @@ static int aw8624_rtp_osc_calibration(struct aw8624 *aw8624)
 			    ("%s !aw8624_haptic_rtp_get_fifo_afi done aw8624->rtp_cnt= %d \n",
 			     __func__, aw8624->rtp_cnt);
 			mutex_lock(&aw8624->rtp_lock);
-			if ((aw8624_rtp->len - aw8624->rtp_cnt) <
+			if ((aw8624_rtp_ary->len - aw8624->rtp_cnt) <
 			    (aw8624->ram.base_addr >> 2))
-				buf_len = aw8624_rtp->len - aw8624->rtp_cnt;
+				buf_len = aw8624_rtp_ary->len - aw8624->rtp_cnt;
 			else
 				buf_len = (aw8624->ram.base_addr >> 2);
-			if (aw8624->rtp_cnt != aw8624_rtp->len) {
+			if (aw8624->rtp_cnt != aw8624_rtp_ary->len) {
 				if (aw8624->timeval_flags == 1) {
 					do_gettimeofday(&aw8624->start);
 					aw8624->timeval_flags = 0;
 				}
 				aw8624_i2c_writes(aw8624, AW8624_REG_RTP_DATA,
-						  &aw8624_rtp->data[aw8624->
+						  &aw8624_rtp_ary->data[aw8624->
 								    rtp_cnt],
 						  buf_len);
 				aw8624->rtp_cnt += buf_len;
@@ -1439,7 +1440,7 @@ static int aw8624_rtp_osc_calibration(struct aw8624 *aw8624)
 			break;
 		}
 	}
-	pm_qos_remove_request(&pm_qos_req_vb);
+	pm_qos_remove_request(&pm_qos_req_vb_ary);
 	enable_irq(gpio_to_irq(aw8624->irq_gpio));
 
 	aw8624->osc_cali_flag = 0;
@@ -1452,7 +1453,7 @@ static int aw8624_rtp_osc_calibration(struct aw8624 *aw8624)
 	return 0;
 }
 
-static void aw8624_rtp_work_routine(struct work_struct *work)
+static void aw8624_rtp_ary_work_routine(struct work_struct *work)
 {
 	const struct firmware *rtp_file;
 	int ret = -1;
@@ -1500,17 +1501,17 @@ static void aw8624_rtp_work_routine(struct work_struct *work)
 		if (aw8624->rtp_file_num < 0)
 			aw8624->rtp_file_num = 0;
 		if (aw8624->rtp_file_num >
-		    ((sizeof(aw8624_rtp_name) / AW8624_RTP_NAME_MAX) - 1))
+		    ((sizeof(aw8624_rtp_ary_name) / aw8624_rtp_ary_NAME_MAX) - 1))
 			aw8624->rtp_file_num =
-			    (sizeof(aw8624_rtp_name) / AW8624_RTP_NAME_MAX) - 1;
+			    (sizeof(aw8624_rtp_ary_name) / aw8624_rtp_ary_NAME_MAX) - 1;
 
 		/* fw loaded */
 		ret = request_firmware(&rtp_file,
-				       aw8624_rtp_name[aw8624->rtp_file_num],
+				       aw8624_rtp_ary_name[aw8624->rtp_file_num],
 				       aw8624->dev);
 		if (ret < 0) {
 			pr_err("%s: failed to read %s\n", __func__,
-			       aw8624_rtp_name[aw8624->rtp_file_num]);
+			       aw8624_rtp_ary_name[aw8624->rtp_file_num]);
 			if (aw8624->wk_lock_flag == 1) {
 				pm_relax(aw8624->dev);
 				aw8624->wk_lock_flag = 0;
@@ -1519,9 +1520,9 @@ static void aw8624_rtp_work_routine(struct work_struct *work)
 			return;
 		}
 		aw8624->rtp_init = 0;
-		vfree(aw8624_rtp);
-		aw8624_rtp = vmalloc(rtp_file->size + sizeof(int));
-		if (!aw8624_rtp) {
+		vfree(aw8624_rtp_ary);
+		aw8624_rtp_ary = vmalloc(rtp_file->size + sizeof(int));
+		if (!aw8624_rtp_ary) {
 			release_firmware(rtp_file);
 			pr_err("%s: error allocating memory\n", __func__);
 			if (aw8624->wk_lock_flag == 1) {
@@ -1531,10 +1532,10 @@ static void aw8624_rtp_work_routine(struct work_struct *work)
 			mutex_unlock(&aw8624->lock);
 			return;
 		}
-		aw8624_rtp->len = rtp_file->size;
+		aw8624_rtp_ary->len = rtp_file->size;
 		pr_info("%s: rtp file [%s] size = %d\n", __func__,
-			aw8624_rtp_name[aw8624->rtp_file_num], aw8624_rtp->len);
-		memcpy(aw8624_rtp->data, rtp_file->data, rtp_file->size);
+			aw8624_rtp_ary_name[aw8624->rtp_file_num], aw8624_rtp_ary->len);
+		memcpy(aw8624_rtp_ary->data, rtp_file->data, rtp_file->size);
 		release_firmware(rtp_file);
 
 		aw8624->rtp_init = 1;
@@ -1964,7 +1965,7 @@ static int aw8624_file_open(struct inode *inode, struct file *file)
 	if (!try_module_get(THIS_MODULE))
 		return -ENODEV;
 	pr_info("%s: enter\n", __func__);
-	file->private_data = (void *)g_aw8624;
+	file->private_data = (void *)g_aw8624_ary;
 
 	return 0;
 }
@@ -2337,7 +2338,7 @@ static int aw8624_vibrator_init(struct aw8624 *aw8624)
 	hrtimer_init(&aw8624->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	aw8624->timer.function = aw8624_vibrator_timer_func;
 	INIT_WORK(&aw8624->vibrator_work, aw8624_vibrator_work_routine);
-	INIT_WORK(&aw8624->rtp_work, aw8624_rtp_work_routine);
+	INIT_WORK(&aw8624->rtp_work, aw8624_rtp_ary_work_routine);
 
 	mutex_init(&aw8624->lock);
 	atomic_set(&aw8624->is_in_rtp_loop, 0);
@@ -2415,25 +2416,25 @@ static irqreturn_t aw8624_irq(int irq, void *data)
 				pr_debug
 				    ("%s: aw8624 rtp mode fifo update, cnt=%d\n",
 				     __func__, aw8624->rtp_cnt);
-				if (!aw8624_rtp) {
-					pr_info("%s:aw8624_rtp is null break\n",
+				if (!aw8624_rtp_ary) {
+					pr_info("%s:aw8624_rtp_ary is null break\n",
 						__func__);
 					mutex_unlock(&aw8624->rtp_lock);
 					break;
 				}
-				if ((aw8624_rtp->len - aw8624->rtp_cnt) <
+				if ((aw8624_rtp_ary->len - aw8624->rtp_cnt) <
 				    (aw8624->ram.base_addr >> 2)) {
 					buf_len =
-					    aw8624_rtp->len - aw8624->rtp_cnt;
+					    aw8624_rtp_ary->len - aw8624->rtp_cnt;
 				} else {
 					buf_len = (aw8624->ram.base_addr >> 2);
 				}
 				aw8624_i2c_writes(aw8624, AW8624_REG_RTP_DATA,
-						  &aw8624_rtp->data[aw8624->
+						  &aw8624_rtp_ary->data[aw8624->
 								    rtp_cnt],
 						  buf_len);
 				aw8624->rtp_cnt += buf_len;
-				if (aw8624->rtp_cnt == aw8624_rtp->len) {
+				if (aw8624->rtp_cnt == aw8624_rtp_ary->len) {
 					pr_info("%s: rtp update complete\n",
 						__func__);
 					aw8624_haptic_set_rtp_aei(aw8624,
@@ -3114,7 +3115,7 @@ static int select_pin_ctl(struct aw8624 *aw8624, const char *name)
 	int rc;
 
 	for (i = 0; i < ARRAY_SIZE(aw8624->pinctrl_state); i++) {
-		const char *n = pctl_names[i];
+		const char *n = pctl_names_ary[i];
 
 		if (!strncmp(n, name, strlen(n))) {
 			rc = pinctrl_select_state(aw8624->aw8624_pinctrl,
@@ -3234,7 +3235,7 @@ static ssize_t aw8624_i2c_reg_show(struct device *dev,
 	unsigned char i = 0;
 	unsigned char reg_val = 0;
 	for (i = 0; i < AW8624_REG_MAX; i++) {
-		if (!(aw8624_reg_access[i] & REG_RD_ACCESS))
+		if (!(aw8624_reg_access_ary[i] & REG_RD_ACCESS))
 			continue;
 		aw8624_i2c_read(aw8624, i, &reg_val);
 		len +=
@@ -3568,7 +3569,7 @@ static ssize_t aw8624_loop_store(struct device *dev,
 	return count;
 }
 
-static ssize_t aw8624_rtp_show(struct device *dev,
+static ssize_t aw8624_rtp_ary_show(struct device *dev,
 			       struct device_attribute *attr, char *buf)
 {
 	struct aw8624 *aw8624 = dev_get_drvdata(dev);
@@ -3580,7 +3581,7 @@ static ssize_t aw8624_rtp_show(struct device *dev,
 	return len;
 }
 
-static ssize_t aw8624_rtp_store(struct device *dev,
+static ssize_t aw8624_rtp_ary_store(struct device *dev,
 				struct device_attribute *attr, const char *buf,
 				size_t count)
 {
@@ -3595,7 +3596,7 @@ static ssize_t aw8624_rtp_store(struct device *dev,
 	aw8624_haptic_stop(aw8624);
 	aw8624_haptic_set_rtp_aei(aw8624, false);
 	aw8624_interrupt_clear(aw8624);
-	if (val < (sizeof(aw8624_rtp_name) / AW8624_RTP_NAME_MAX)) {
+	if (val < (sizeof(aw8624_rtp_ary_name) / aw8624_rtp_ary_NAME_MAX)) {
 		aw8624->rtp_file_num = val;
 		if (val) {
 			//schedule_work(&aw8624->rtp_work);
@@ -4047,11 +4048,11 @@ static ssize_t aw8624_osc_cali_store(struct device *dev,
 	/*osc calibration flag start,Other behaviors are forbidden */
 	aw8624->osc_cali_run = 1;
 	if (val == 3) {
-		aw8624_rtp_osc_calibration(aw8624);
-		aw8624_rtp_trim_lra_calibration(aw8624);
+		aw8624_rtp_ary_osc_calibration(aw8624);
+		aw8624_rtp_ary_trim_lra_calibration(aw8624);
 	}
 	if (val == 1)
-		aw8624_rtp_osc_calibration(aw8624);
+		aw8624_rtp_ary_osc_calibration(aw8624);
 
 	aw8624->osc_cali_run = 0;
 	/*osc calibration flag end,Other behaviors are permitted */
@@ -4160,7 +4161,7 @@ static DEVICE_ATTR(ulevel, 0644, aw8624_ulevel_show,
 static DEVICE_ATTR(seq, S_IWUSR | S_IRUGO, aw8624_seq_show, aw8624_seq_store);
 static DEVICE_ATTR(loop, S_IWUSR | S_IRUGO, aw8624_loop_show,
 		   aw8624_loop_store);
-static DEVICE_ATTR(rtp, S_IWUSR | S_IRUGO, aw8624_rtp_show, aw8624_rtp_store);
+static DEVICE_ATTR(rtp, S_IWUSR | S_IRUGO, aw8624_rtp_ary_show, aw8624_rtp_ary_store);
 static DEVICE_ATTR(ram_update, S_IWUSR | S_IRUGO, aw8624_ram_update_show,
 		   aw8624_ram_update_store);
 static DEVICE_ATTR(f0, S_IWUSR | S_IRUGO, aw8624_f0_show, aw8624_f0_store);
@@ -4298,7 +4299,7 @@ aw8624_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
 		return rc;
 	}
 	for (i = 0; i < ARRAY_SIZE(aw8624->pinctrl_state); i++) {
-		const char *n = pctl_names[i];
+		const char *n = pctl_names_ary[i];
 		struct pinctrl_state *state =
 		    pinctrl_lookup_state(aw8624->aw8624_pinctrl, n);
 		if (IS_ERR(state)) {
@@ -4430,7 +4431,7 @@ aw8624_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
 		goto err_sysfs;
 	}
 
-	g_aw8624 = aw8624;
+	g_aw8624_ary = aw8624;
 
 	pr_info("%s: probe completed successfully!\n", __func__);
 
