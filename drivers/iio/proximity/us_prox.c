@@ -34,6 +34,7 @@
 #include <linux/of_irq.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
+#include <misc/aghisna_proximity.h>
 
 #define US_PROX_IIO_NAME		"distance"
 
@@ -269,7 +270,11 @@ static int us_prox_probe(struct platform_device *pdev)
 	g_us_prox = us_prox;
 
 	mutex_init(&us_prox->mutex);
-	ret = us_proximity_iio_setup(us_prox);
+	
+	if (no_proxi) {
+		ret = us_proximity_iio_setup(us_prox);
+	}
+	
 	if (ret < 0) {
 		pr_err("%s: iio setup failed ret = %d\n", __func__, ret);
 		return ret;
