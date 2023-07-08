@@ -56,6 +56,24 @@ static int __init read_haptic_oss(char *s)
 }
 __setup("aghisna.haptico=", read_haptic_oss);
 
+bool __read_mostly haptic_qti_aryan = false;
+module_param(haptic_qti_aryan, bool, 0644);
+
+static int __init read_haptic_aryan(char *s)
+{
+    int status;
+	if (s)
+		status = simple_strtoul(s, NULL, 0);
+
+	if ( status > 0 ) {
+		haptic_qti_aryan = true;
+	} else {
+		haptic_qti_aryan = false;
+	}
+	return 1;
+}
+__setup("aghisna.haptica=", read_haptic_aryan);
+
 static int __init prepare_driver_init(void) {
  printk(KERN_INFO "aghisna haptic initialized");
  return 0;

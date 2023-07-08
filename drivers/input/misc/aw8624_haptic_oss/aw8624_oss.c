@@ -41,7 +41,7 @@
  *
  ******************************************************/
 #define AW8624_I2C_NAME "aw8624_haptic"
-#define AW8624_HAPTIC_NAME "aw8624_haptic"
+#define AW8624_HAPTIC_NAME "aw8624_haptic_oss"
 
 #define AW8624_VERSION "v1.0.9"
 

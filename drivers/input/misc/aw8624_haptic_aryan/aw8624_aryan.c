@@ -31,8 +31,8 @@
 #include <linux/syscalls.h>
 #include <linux/power_supply.h>
 #include <linux/pm_qos.h>
-#include "aw8624_reg.h"
-#include "aw8624.h"
+#include "aw8624_reg_aryan.h"
+#include "aw8624_aryan.h"
 
 /******************************************************
  *
@@ -40,7 +40,7 @@
  *
  ******************************************************/
 #define AW8624_I2C_NAME "aw8624_haptic"
-#define AW8624_HAPTIC_NAME "aw8624_haptic"
+#define AW8624_HAPTIC_NAME "aw8624_haptic_aryan"
 
 #define AW8624_VERSION "v1.0.0"
 
@@ -4509,7 +4509,10 @@ static int __init aw8624_i2c_init(void)
 
 	pr_info("%s: aw8624 driver version %s\n", __func__, AW8624_VERSION);
 
-	ret = i2c_add_driver(&aw8624_i2c_driver);
+	if (haptic_qti_aryan) {
+		ret = i2c_add_driver(&aw8624_i2c_driver);
+	}
+	
 	if (ret) {
 		pr_err("%s: fail to add aw8624 device into i2c\n");
 		return ret;
