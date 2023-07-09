@@ -11,3 +11,6 @@
 
 obj-y += stub/ audio/ data/
 header-y += stub/include/uapi/ audio/include/uapi/
+
+ccflags-y += -Os
+ccflags-y += -g0
