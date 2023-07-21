@@ -1,4 +1,4 @@
-/*
+\/*
  * segment.c - NILFS segment constructor.
  *
  * Copyright (C) 2005-2008 Nippon Telegraph and Telephone Corporation.
@@ -778,7 +778,7 @@ static void nilfs_lookup_dirty_node_buffers(struct inode *inode,
 	pagevec_init(&pvec, 0);
 
 	while (pagevec_lookup_tag(&pvec, btnc_inode->i_mapping, &index,
-				  PAGECACHE_TAG_DIRTY, PAGEVEC_SIZE)) {
+					PAGECACHE_TAG_DIRTY)) {
 		for (i = 0; i < pagevec_count(&pvec); i++) {
 			bh = head = page_buffers(pvec.pages[i]);
 			do {
