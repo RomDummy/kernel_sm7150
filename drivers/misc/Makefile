@@ -109,3 +109,4 @@ obj-y += aghisna_gpu.o
 obj-y += aghisna_ksu.o
 obj-y += aghisna_haptic.o
 obj-y += aghisna_proxi.o
+obj-y += aghisna_kcal.o
