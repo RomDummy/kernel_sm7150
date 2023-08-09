@@ -136,7 +136,7 @@ static void sde_encoder_phys_wb_set_qos_remap(
 	qos_params.client_type = phys_enc->in_clone_mode ?
 					VBIF_CWB_CLIENT : VBIF_NRT_CLIENT;
 
-	SDE_DEBUG("[qos_remap] wb:%d vbif:%d xin:%d rt:%d clone:%d\n",
+	SDE_DEBUG("[qos_remap] wb:%d vbif:%d xin:%d clone:%d\n",
 			qos_params.num,
 			qos_params.vbif_idx,
 			qos_params.xin_id, qos_params.client_type);
@@ -1227,7 +1227,7 @@ static int _sde_encoder_phys_wb_wait_for_commit_done(
 	u32 event = 0;
 	u64 wb_time = 0;
 	int rc = 0;
-	struct sde_encoder_wait_info wait_info = {0};
+	struct sde_encoder_wait_info wait_info;
 
 	/* Return EWOULDBLOCK since we know the wait isn't necessary */
 	if (phys_enc->enable_state == SDE_ENC_DISABLED) {

@@ -17,6 +17,7 @@
 
 #include <linux/module.h>
 #include <linux/platform_device.h>
+#include <misc/aghisna_kcal.h>
 #include <uapi/drm/msm_drm_pp.h>
 #include "sde_hw_kcal_ctrl.h"
 
@@ -187,13 +188,19 @@ static int __init sde_hw_kcal_ctrl_init(void)
 {
 	int ret;
 
-	ret = platform_driver_register(&sde_hw_kcal_ctrl_driver);
+	if (kcal_dsi) {
+		ret = platform_driver_register(&sde_hw_kcal_ctrl_driver);
+	}
+	
 	if (ret) {
 		pr_err("Unable to register platform driver\n");
 		return ret;
 	}
 
-	ret = platform_device_register(&sde_hw_kcal_ctrl_device);
+	if (kcal_dsi) {
+		ret = platform_device_register(&sde_hw_kcal_ctrl_device);
+	}
+	
 	if (ret) {
 		pr_err("Unable to register platform device\n");
 		platform_driver_unregister(&sde_hw_kcal_ctrl_driver);

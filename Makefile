@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 VERSION = 4
 PATCHLEVEL = 14
-SUBLEVEL = 320
+SUBLEVEL = 321
 EXTRAVERSION =
 NAME = Petit Gorille
 
@@ -758,6 +758,9 @@ endif
 ifdef CONFIG_MINIMAL_TRACING_FOR_IORAP
 KBUILD_CFLAGS   += -DNOTRACE
 endif
+ifdef CONFIG_LTO_CLANG
+KBUILD_CFLAG	+= -fwhole-program-vtables
+endif
 
 # Tell compiler to use pipes instead of temporary files during compilation
 KBUILD_CFLAGS += $(call cc-option, -pipe)
@@ -941,9 +944,12 @@ lto-clang-flags += -fvisibility=default $(call cc-option, -fsplit-lto-unit)
 
 KBUILD_LDFLAGS_MODULE += -T scripts/module-lto.lds
 
+KBUILD_LDS_MODULE += $(srctree)/scripts/module-lto.lds
+
 # allow disabling only clang LTO where needed
 DISABLE_LTO_CLANG := -fno-lto
 export DISABLE_LTO_CLANG
+LDFLAGS		+= --plugin-opt=-import-instr-limit=5
 endif
 
 ifdef CONFIG_LTO
@@ -1504,7 +1510,6 @@ all: modules
 
 PHONY += modules
 modules: $(vmlinux-dirs) $(if $(KBUILD_BUILTIN),vmlinux) modules.builtin
-	$(Q)$(AWK) '!x[$$0]++' $(vmlinux-dirs:%=$(objtree)/%/modules.order) > $(objtree)/modules.order
 	@$(kecho) '  Building modules, stage 2.';
 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modpost
 
@@ -1533,7 +1538,6 @@ _modinst_:
 		rm -f $(MODLIB)/build ; \
 		ln -s $(CURDIR) $(MODLIB)/build ; \
 	fi
-	@cp -f $(objtree)/modules.order $(MODLIB)/
 	@cp -f $(objtree)/modules.builtin $(MODLIB)/
 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modinst
 

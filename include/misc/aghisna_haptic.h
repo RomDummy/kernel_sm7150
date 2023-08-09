@@ -16,3 +16,4 @@
 
 extern bool haptic_qti_miui;
 extern bool haptic_qti_oss;
+extern bool haptic_qti_aryan;
